@@ -54,6 +54,13 @@ const FinancialHealth: React.FC<Props> = ({ transactions, currency }) => {
 
   if (!metric) return null;
 
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat(undefined, { 
+      style: 'currency', 
+      currency: currency 
+    }).format(amount);
+  };
+
   const getScoreColor = (score: number) => {
     if (score >= 80) return 'text-emerald-500';
     if (score >= 60) return 'text-indigo-500';
@@ -101,7 +108,7 @@ const FinancialHealth: React.FC<Props> = ({ transactions, currency }) => {
           <div className="flex flex-col sm:flex-row justify-between items-end">
              <div>
                 <p className="text-indigo-100 text-sm mb-1">Estimated Savings Potential</p>
-                <p className="text-3xl font-bold">+{currency} {metric.projectedSavings.toFixed(2)}</p>
+                <p className="text-3xl font-bold">+{formatCurrency(metric.projectedSavings)}</p>
              </div>
              <button className="mt-4 sm:mt-0 px-4 py-2 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-lg text-sm font-medium transition-colors">
                 View Detailed Plan

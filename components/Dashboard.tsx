@@ -15,6 +15,24 @@ const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'
 
 const Dashboard: React.FC<DashboardProps> = ({ transactions, currency }) => {
   
+  // Format helper
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat(undefined, { 
+      style: 'currency', 
+      currency: currency 
+    }).format(amount);
+  };
+
+  // Compact format for charts
+  const formatCompact = (amount: number) => {
+    return new Intl.NumberFormat(undefined, { 
+      style: 'currency', 
+      currency: currency,
+      notation: "compact", 
+      compactDisplay: "short" 
+    }).format(amount);
+  };
+
   // Memoized calculations for performance
   const summary = useMemo(() => {
     const totalIncome = transactions
@@ -41,13 +59,11 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions, currency }) => {
   }, [transactions]);
 
   const monthlyFlow = useMemo(() => {
-    // Simplified: Group by Date (Day) for the demo, ideally would be proper month aggregation
     const flow: Record<string, { income: number; expense: number }> = {};
-    // Sort transactions by date
     const sorted = [...transactions].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     
     sorted.forEach(t => {
-      const date = t.date; // Use full date for granularity in this demo
+      const date = t.date; 
       if (!flow[date]) flow[date] = { income: 0, expense: 0 };
       if (t.type === TransactionType.INCOME) flow[date].income += t.amount;
       else flow[date].expense += t.amount;
@@ -68,7 +84,7 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions, currency }) => {
           <div>
             <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Total Balance</p>
             <h3 className={`text-2xl font-bold ${summary.balance >= 0 ? 'text-slate-800 dark:text-white' : 'text-red-500'}`}>
-                {currency} {summary.balance.toFixed(2)}
+                {formatCurrency(summary.balance)}
             </h3>
           </div>
           <div className={`p-3 rounded-full ${summary.balance >= 0 ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400' : 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'}`}>
@@ -79,7 +95,7 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions, currency }) => {
         <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 flex items-center justify-between transition-colors">
           <div>
             <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Total Income</p>
-            <h3 className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">+{currency} {summary.totalIncome.toFixed(2)}</h3>
+            <h3 className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">+{formatCurrency(summary.totalIncome)}</h3>
           </div>
           <div className="p-3 rounded-full bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400">
             <TrendingUp size={24} />
@@ -89,7 +105,7 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions, currency }) => {
         <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 flex items-center justify-between transition-colors">
           <div>
             <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Total Expenses</p>
-            <h3 className="text-2xl font-bold text-red-500 dark:text-red-400">-{currency} {summary.totalExpense.toFixed(2)}</h3>
+            <h3 className="text-2xl font-bold text-red-500 dark:text-red-400">-{formatCurrency(summary.totalExpense)}</h3>
           </div>
           <div className="p-3 rounded-full bg-red-50 dark:bg-red-900/20 text-red-500 dark:text-red-400">
             <TrendingDown size={24} />
@@ -110,8 +126,9 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions, currency }) => {
               <BarChart data={monthlyFlow}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" className="dark:stroke-slate-700" />
                 <XAxis dataKey="date" tick={{fontSize: 12, fill: '#64748b'}} />
-                <YAxis tick={{fontSize: 12, fill: '#64748b'}} />
+                <YAxis tick={{fontSize: 12, fill: '#64748b'}} tickFormatter={formatCompact} />
                 <Tooltip 
+                  formatter={(value: number) => formatCurrency(value)}
                   contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}} 
                   cursor={{fill: 'transparent'}}
                 />
@@ -142,7 +159,7 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions, currency }) => {
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
-                <Tooltip />
+                <Tooltip formatter={(value: number) => formatCurrency(value)} />
               </PieChart>
             </ResponsiveContainer>
             {/* Legend */}

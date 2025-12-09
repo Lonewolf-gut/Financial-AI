@@ -22,6 +22,13 @@ const TransactionsList: React.FC<Props> = ({ transactions, currency, onAdd, onDe
     category: 'General'
   });
 
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat(undefined, { 
+      style: 'currency', 
+      currency: currency 
+    }).format(amount);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.merchant || !formData.amount) return;
@@ -54,7 +61,7 @@ const TransactionsList: React.FC<Props> = ({ transactions, currency, onAdd, onDe
       t.type,
       `"${t.merchant.replace(/"/g, '""')}"`, // escape quotes for CSV
       t.category,
-      t.amount.toFixed(2),
+      t.amount.toFixed(2), // Keep raw number for Excel data type accuracy
       `"${(t.description || '').replace(/"/g, '""')}"`
     ]);
 
@@ -242,7 +249,7 @@ const TransactionsList: React.FC<Props> = ({ transactions, currency, onAdd, onDe
                                  </span>
                              </td>
                              <td className={`p-4 text-right font-bold ${t.type === TransactionType.INCOME ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-800 dark:text-slate-200'}`}>
-                                 {t.type === TransactionType.INCOME ? '+' : '-'}{currency} {t.amount.toFixed(2)}
+                                 {t.type === TransactionType.INCOME ? '+' : '-'} {formatCurrency(t.amount)}
                              </td>
                              <td className="p-4 text-center no-print">
                                  <button 

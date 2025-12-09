@@ -69,6 +69,13 @@ const App: React.FC = () => {
      return income - expense;
   }, [transactions]);
 
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat(undefined, { 
+      style: 'currency', 
+      currency: currency 
+    }).format(amount);
+  };
+
   const NavItem = ({ view, icon: Icon, label }: { view: AppView; icon: any; label: string }) => (
     <button
       onClick={() => {
@@ -127,7 +134,7 @@ const App: React.FC = () => {
 
              <div className="bg-slate-900 dark:bg-slate-950 rounded-xl p-4 text-white shadow-lg">
                 <p className="text-xs text-slate-400 mb-1">Current Balance</p>
-                <p className="text-xl font-bold">{currency} {currentBalance.toFixed(2)}</p>
+                <p className="text-xl font-bold">{formatCurrency(currentBalance)}</p>
                 <div className="mt-3 flex items-center gap-2 text-xs text-emerald-400">
                     <Activity size={12} />
                     <span>Real-time</span>
