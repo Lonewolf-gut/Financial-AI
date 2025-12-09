@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { LayoutDashboard, Wallet, Receipt, MessageSquareText, Activity, Menu, X, Plus, List, Moon, Sun } from 'lucide-react';
-import { Transaction, TransactionType, AppView } from './types';
+import { LayoutDashboard, Wallet, Receipt, MessageSquareText, Activity, Menu, X, Plus, List, Moon, Sun, LogOut } from 'lucide-react';
+import { Transaction, TransactionType, AppView, User } from './types';
 import Dashboard from './components/Dashboard';
 import Scanner from './components/Scanner';
 import AICoach from './components/AICoach';
 import FinancialHealth from './components/FinancialHealth';
 import TransactionsList from './components/TransactionsList';
+import Auth from './components/Auth';
 
-// Seed Data for Demo
+// Seed Data for Demo (used if no data exists for user)
 const INITIAL_TRANSACTIONS: Transaction[] = [
   { id: '1', date: '2023-10-01', merchant: 'TechCorp Salary', amount: 4500, category: 'Income', type: TransactionType.INCOME },
   { id: '2', date: '2023-10-02', merchant: 'Starbucks', amount: 12.50, category: 'Food & Drink', type: TransactionType.EXPENSE },
@@ -20,8 +21,10 @@ const INITIAL_TRANSACTIONS: Transaction[] = [
 ];
 
 const App: React.FC = () => {
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [currentView, setCurrentView] = useState<AppView>(AppView.DASHBOARD);
-  const [transactions, setTransactions] = useState<Transaction[]>(INITIAL_TRANSACTIONS);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   
   // Theme State
@@ -29,6 +32,38 @@ const App: React.FC = () => {
   
   // Currency State
   const [currency, setCurrency] = useState('USD');
+
+  // 1. Check for active session on load
+  useEffect(() => {
+    const session = localStorage.getItem('elag_session');
+    if (session) {
+        setUser(JSON.parse(session));
+    }
+    setIsLoading(false);
+  }, []);
+
+  // 2. Load User Data when user state changes
+  useEffect(() => {
+    if (user) {
+        const storedData = localStorage.getItem(`elag_transactions_${user.id}`);
+        if (storedData) {
+            setTransactions(JSON.parse(storedData));
+        } else {
+            // First time user? Give them seed data or empty array
+            // Let's give seed data for demo purposes, then they can delete it
+            setTransactions(INITIAL_TRANSACTIONS);
+        }
+    } else {
+        setTransactions([]);
+    }
+  }, [user]);
+
+  // 3. Save User Data whenever transactions change
+  useEffect(() => {
+    if (user && transactions.length > 0) {
+        localStorage.setItem(`elag_transactions_${user.id}`, JSON.stringify(transactions));
+    }
+  }, [transactions, user]);
 
   // Detect Currency on mount
   useEffect(() => {
@@ -40,7 +75,6 @@ const App: React.FC = () => {
          else if (locale.includes('IN')) setCurrency('INR');
          else if (locale.includes('CA')) setCurrency('CAD');
          else if (locale.includes('AU')) setCurrency('AUD');
-         // Default is USD
      } catch (e) {
          console.warn("Could not detect currency automatically.");
      }
@@ -54,6 +88,15 @@ const App: React.FC = () => {
       document.documentElement.classList.remove('dark');
     }
   }, [darkMode]);
+
+  const handleLogin = (loggedInUser: User) => {
+    setUser(loggedInUser);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('elag_session');
+    setUser(null);
+  };
 
   const addTransaction = (t: Transaction) => {
     setTransactions(prev => [...prev, t]);
@@ -93,6 +136,12 @@ const App: React.FC = () => {
     </button>
   );
 
+  if (isLoading) return null;
+
+  if (!user) {
+    return <Auth onLogin={handleLogin} />;
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex font-sans transition-colors duration-300">
       {/* Mobile Sidebar Overlay */}
@@ -115,6 +164,11 @@ const App: React.FC = () => {
             <h1 className="text-xl font-bold tracking-tight text-slate-800 dark:text-white">ELAG AI</h1>
           </div>
 
+          <div className="mb-6 px-4 py-3 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-700">
+             <p className="text-xs text-slate-400 font-medium uppercase tracking-wider mb-1">Signed in as</p>
+             <p className="font-semibold text-slate-800 dark:text-white truncate">{user.name}</p>
+          </div>
+
           <nav className="space-y-2 flex-1">
             <NavItem view={AppView.DASHBOARD} icon={LayoutDashboard} label="Dashboard" />
             <NavItem view={AppView.TRANSACTIONS} icon={List} label="Transactions" />
@@ -123,13 +177,21 @@ const App: React.FC = () => {
             <NavItem view={AppView.COACH} icon={MessageSquareText} label="ELAG Coach" />
           </nav>
 
-          <div className="mt-auto">
+          <div className="mt-auto space-y-4">
              <button 
                 onClick={() => setDarkMode(!darkMode)}
-                className="w-full mb-6 flex items-center gap-3 px-4 py-2 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                className="w-full flex items-center gap-3 px-4 py-2 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
              >
                 {darkMode ? <Sun size={20} /> : <Moon size={20} />}
                 <span>{darkMode ? 'Light Mode' : 'Dark Mode'}</span>
+             </button>
+
+             <button 
+                onClick={handleLogout}
+                className="w-full flex items-center gap-3 px-4 py-2 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+             >
+                <LogOut size={20} />
+                <span>Sign Out</span>
              </button>
 
              <div className="bg-slate-900 dark:bg-slate-950 rounded-xl p-4 text-white shadow-lg">
