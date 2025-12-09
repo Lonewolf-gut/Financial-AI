@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
-import { LayoutDashboard, Wallet, Receipt, MessageSquareText, Activity, Menu, X, Plus } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { LayoutDashboard, Wallet, Receipt, MessageSquareText, Activity, Menu, X, Plus, List, Moon, Sun } from 'lucide-react';
 import { Transaction, TransactionType, AppView } from './types';
 import Dashboard from './components/Dashboard';
 import Scanner from './components/Scanner';
 import AICoach from './components/AICoach';
 import FinancialHealth from './components/FinancialHealth';
+import TransactionsList from './components/TransactionsList';
 
 // Seed Data for Demo
 const INITIAL_TRANSACTIONS: Transaction[] = [
@@ -22,11 +23,58 @@ const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<AppView>(AppView.DASHBOARD);
   const [transactions, setTransactions] = useState<Transaction[]>(INITIAL_TRANSACTIONS);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  
+  // Theme State
+  const [darkMode, setDarkMode] = useState(false);
+  
+  // Currency State
+  const [currency, setCurrency] = useState('USD');
+
+  // Detect Currency on mount
+  useEffect(() => {
+     // Try to guess based on locale
+     try {
+         // This gives us a string like "USD", "EUR", "GBP"
+         // Note: Some browsers might return undefined or throw if they can't detect.
+         // Common strategy is mapping language.
+         const locale = navigator.language || 'en-US';
+         // Simple mapping for demonstration as Intl...currency doesn't always work directly for detection without format parts
+         if (locale.includes('GB')) setCurrency('GBP');
+         else if (locale.includes('EU') || locale.includes('DE') || locale.includes('FR') || locale.includes('ES') || locale.includes('IT')) setCurrency('EUR');
+         else if (locale.includes('JP')) setCurrency('JPY');
+         else if (locale.includes('IN')) setCurrency('INR');
+         else if (locale.includes('CA')) setCurrency('CAD');
+         else if (locale.includes('AU')) setCurrency('AUD');
+         // Default is USD initialized in state
+     } catch (e) {
+         console.warn("Could not detect currency automatically.");
+     }
+  }, []);
+
+  // Apply Dark Mode class
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [darkMode]);
 
   const addTransaction = (t: Transaction) => {
     setTransactions(prev => [...prev, t]);
-    setCurrentView(AppView.DASHBOARD);
+    // Optional: stay on page or go to dashboard
+    // setCurrentView(AppView.DASHBOARD); 
   };
+
+  const deleteTransaction = (id: string) => {
+    setTransactions(prev => prev.filter(t => t.id !== id));
+  };
+
+  const currentBalance = useMemo(() => {
+     const income = transactions.filter(t => t.type === TransactionType.INCOME).reduce((a, b) => a + b.amount, 0);
+     const expense = transactions.filter(t => t.type === TransactionType.EXPENSE).reduce((a, b) => a + b.amount, 0);
+     return income - expense;
+  }, [transactions]);
 
   const NavItem = ({ view, icon: Icon, label }: { view: AppView; icon: any; label: string }) => (
     <button
@@ -37,7 +85,7 @@ const App: React.FC = () => {
       className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium ${
         currentView === view
           ? 'bg-indigo-600 text-white shadow-md'
-          : 'text-slate-500 hover:bg-indigo-50 hover:text-indigo-600'
+          : 'text-slate-500 dark:text-slate-400 hover:bg-indigo-50 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400'
       }`}
     >
       <Icon size={20} />
@@ -46,7 +94,7 @@ const App: React.FC = () => {
   );
 
   return (
-    <div className="min-h-screen bg-slate-50 flex font-sans">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex font-sans transition-colors duration-300">
       {/* Mobile Sidebar Overlay */}
       {isSidebarOpen && (
         <div 
@@ -56,31 +104,41 @@ const App: React.FC = () => {
       )}
 
       {/* Sidebar */}
-      <aside className={`fixed lg:sticky top-0 left-0 h-screen w-64 bg-white border-r border-slate-200 z-30 transform transition-transform duration-300 ease-in-out ${
+      <aside className={`fixed lg:sticky top-0 left-0 h-screen w-64 bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 z-30 transform transition-transform duration-300 ease-in-out ${
         isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
       }`}>
-        <div className="p-6">
-          <div className="flex items-center gap-2 mb-8 text-indigo-700">
+        <div className="p-6 flex flex-col h-full">
+          <div className="flex items-center gap-2 mb-8 text-indigo-700 dark:text-indigo-400">
             <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
                 <Wallet className="text-white" size={18}/>
             </div>
-            <h1 className="text-xl font-bold tracking-tight">FinPath AI</h1>
+            <h1 className="text-xl font-bold tracking-tight text-slate-800 dark:text-white">FinPath AI</h1>
           </div>
 
-          <nav className="space-y-2">
+          <nav className="space-y-2 flex-1">
             <NavItem view={AppView.DASHBOARD} icon={LayoutDashboard} label="Dashboard" />
+            <NavItem view={AppView.TRANSACTIONS} icon={List} label="Transactions" />
             <NavItem view={AppView.FORECAST} icon={Activity} label="Risk Forecast" />
-            <NavItem view={AppView.RECEIPT_SCANNER} icon={Receipt} label="Scan Receipt" />
+            <NavItem view={AppView.RECEIPT_SCANNER} icon={Receipt} label="Scan / Camera" />
             <NavItem view={AppView.COACH} icon={MessageSquareText} label="AI Coach" />
           </nav>
 
-          <div className="absolute bottom-6 left-6 right-6">
-             <div className="bg-slate-900 rounded-xl p-4 text-white">
+          <div className="mt-auto">
+             {/* Theme Toggle in Sidebar for Desktop */}
+             <button 
+                onClick={() => setDarkMode(!darkMode)}
+                className="w-full mb-6 flex items-center gap-3 px-4 py-2 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+             >
+                {darkMode ? <Sun size={20} /> : <Moon size={20} />}
+                <span>{darkMode ? 'Light Mode' : 'Dark Mode'}</span>
+             </button>
+
+             <div className="bg-slate-900 dark:bg-slate-950 rounded-xl p-4 text-white shadow-lg">
                 <p className="text-xs text-slate-400 mb-1">Current Balance</p>
-                <p className="text-xl font-bold">$3,425.80</p>
+                <p className="text-xl font-bold">{currency} {currentBalance.toFixed(2)}</p>
                 <div className="mt-3 flex items-center gap-2 text-xs text-emerald-400">
                     <Activity size={12} />
-                    <span>+12% this month</span>
+                    <span>Real-time</span>
                 </div>
              </div>
           </div>
@@ -90,51 +148,59 @@ const App: React.FC = () => {
       {/* Main Content */}
       <main className="flex-1 min-w-0">
         {/* Mobile Header */}
-        <header className="lg:hidden bg-white border-b border-slate-200 p-4 flex items-center justify-between sticky top-0 z-10">
-          <div className="flex items-center gap-2 font-bold text-slate-800">
-            <Wallet className="text-indigo-600" size={24} />
+        <header className="lg:hidden bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 p-4 flex items-center justify-between sticky top-0 z-10 transition-colors">
+          <div className="flex items-center gap-2 font-bold text-slate-800 dark:text-white">
+            <Wallet className="text-indigo-600 dark:text-indigo-400" size={24} />
             <span>FinPath</span>
           </div>
-          <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 text-slate-600">
-            {isSidebarOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
+          <div className="flex items-center gap-2">
+            <button onClick={() => setDarkMode(!darkMode)} className="p-2 text-slate-600 dark:text-slate-300">
+                {darkMode ? <Sun size={20} /> : <Moon size={20} />}
+            </button>
+            <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 text-slate-600 dark:text-slate-300">
+                {isSidebarOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
+          </div>
         </header>
 
         <div className="p-4 lg:p-8 max-w-7xl mx-auto">
             {/* Header Area */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
                 <div>
-                    <h2 className="text-2xl font-bold text-slate-800">
+                    <h2 className="text-2xl font-bold text-slate-800 dark:text-white">
                         {currentView === AppView.DASHBOARD && 'Financial Overview'}
-                        {currentView === AppView.RECEIPT_SCANNER && 'Upload Receipt'}
+                        {currentView === AppView.TRANSACTIONS && 'Transaction History'}
+                        {currentView === AppView.RECEIPT_SCANNER && 'Add Document or Photo'}
                         {currentView === AppView.COACH && 'Your AI Financial Coach'}
                         {currentView === AppView.FORECAST && 'Predictive Health Check'}
                     </h2>
-                    <p className="text-slate-500">
+                    <p className="text-slate-500 dark:text-slate-400">
                         {currentView === AppView.DASHBOARD && 'Track your cash flow and spending patterns.'}
-                        {currentView === AppView.RECEIPT_SCANNER && 'Digitize your paper trail instantly.'}
+                        {currentView === AppView.TRANSACTIONS && 'Manage income and expenses manually.'}
+                        {currentView === AppView.RECEIPT_SCANNER && 'Digitize receipts, PDFs, or take photos.'}
                         {currentView === AppView.COACH && 'Chat with Fin to get personalized advice.'}
                         {currentView === AppView.FORECAST && 'Identify risks before they become problems.'}
                     </p>
                 </div>
                 
-                {currentView !== AppView.RECEIPT_SCANNER && (
+                {currentView !== AppView.RECEIPT_SCANNER && currentView !== AppView.TRANSACTIONS && (
                     <button 
-                        onClick={() => setCurrentView(AppView.RECEIPT_SCANNER)}
+                        onClick={() => setCurrentView(AppView.TRANSACTIONS)}
                         className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-lg font-medium transition-colors shadow-sm hover:shadow-md"
                     >
                         <Plus size={18} />
-                        <span>Add Transaction</span>
+                        <span>Manage Transactions</span>
                     </button>
                 )}
             </div>
 
             {/* View Content */}
             <div className="min-h-[500px]">
-                {currentView === AppView.DASHBOARD && <Dashboard transactions={transactions} />}
+                {currentView === AppView.DASHBOARD && <Dashboard transactions={transactions} currency={currency} />}
+                {currentView === AppView.TRANSACTIONS && <TransactionsList transactions={transactions} currency={currency} onAdd={addTransaction} onDelete={deleteTransaction} />}
                 {currentView === AppView.RECEIPT_SCANNER && <Scanner onAddTransaction={addTransaction} />}
-                {currentView === AppView.COACH && <AICoach transactions={transactions} />}
-                {currentView === AppView.FORECAST && <FinancialHealth transactions={transactions} />}
+                {currentView === AppView.COACH && <AICoach transactions={transactions} currency={currency} />}
+                {currentView === AppView.FORECAST && <FinancialHealth transactions={transactions} currency={currency} />}
             </div>
         </div>
       </main>

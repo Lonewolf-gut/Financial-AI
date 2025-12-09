@@ -1,18 +1,19 @@
 import React, { useMemo } from 'react';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
-  PieChart, Pie, Cell, LineChart, Line 
+  PieChart, Pie, Cell
 } from 'recharts';
 import { Transaction, TransactionType } from '../types';
 import { TrendingUp, TrendingDown, DollarSign, Activity } from 'lucide-react';
 
 interface DashboardProps {
   transactions: Transaction[];
+  currency: string;
 }
 
 const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
-const Dashboard: React.FC<DashboardProps> = ({ transactions }) => {
+const Dashboard: React.FC<DashboardProps> = ({ transactions, currency }) => {
   
   // Memoized calculations for performance
   const summary = useMemo(() => {
@@ -63,32 +64,34 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions }) => {
     <div className="space-y-6 animate-fade-in">
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
+        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 flex items-center justify-between transition-colors">
           <div>
-            <p className="text-sm font-medium text-slate-500">Total Balance</p>
-            <h3 className="text-2xl font-bold text-slate-800">${summary.balance.toFixed(2)}</h3>
+            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Total Balance</p>
+            <h3 className={`text-2xl font-bold ${summary.balance >= 0 ? 'text-slate-800 dark:text-white' : 'text-red-500'}`}>
+                {currency} {summary.balance.toFixed(2)}
+            </h3>
           </div>
-          <div className={`p-3 rounded-full ${summary.balance >= 0 ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'}`}>
+          <div className={`p-3 rounded-full ${summary.balance >= 0 ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400' : 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'}`}>
             <DollarSign size={24} />
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
+        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 flex items-center justify-between transition-colors">
           <div>
-            <p className="text-sm font-medium text-slate-500">Monthly Income</p>
-            <h3 className="text-2xl font-bold text-emerald-600">+${summary.totalIncome.toFixed(2)}</h3>
+            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Total Income</p>
+            <h3 className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">+{currency} {summary.totalIncome.toFixed(2)}</h3>
           </div>
-          <div className="p-3 rounded-full bg-emerald-50 text-emerald-600">
+          <div className="p-3 rounded-full bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400">
             <TrendingUp size={24} />
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
+        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 flex items-center justify-between transition-colors">
           <div>
-            <p className="text-sm font-medium text-slate-500">Monthly Expenses</p>
-            <h3 className="text-2xl font-bold text-red-500">-${summary.totalExpense.toFixed(2)}</h3>
+            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Total Expenses</p>
+            <h3 className="text-2xl font-bold text-red-500 dark:text-red-400">-{currency} {summary.totalExpense.toFixed(2)}</h3>
           </div>
-          <div className="p-3 rounded-full bg-red-50 text-red-500">
+          <div className="p-3 rounded-full bg-red-50 dark:bg-red-900/20 text-red-500 dark:text-red-400">
             <TrendingDown size={24} />
           </div>
         </div>
@@ -98,18 +101,19 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions }) => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
         {/* Cash Flow */}
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-          <h4 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
+        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 transition-colors">
+          <h4 className="text-lg font-semibold text-slate-800 dark:text-white mb-4 flex items-center gap-2">
             <Activity size={20} className="text-indigo-500" /> Cash Flow
           </h4>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={monthlyFlow}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" className="dark:stroke-slate-700" />
                 <XAxis dataKey="date" tick={{fontSize: 12, fill: '#64748b'}} />
                 <YAxis tick={{fontSize: 12, fill: '#64748b'}} />
                 <Tooltip 
                   contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}} 
+                  cursor={{fill: 'transparent'}}
                 />
                 <Bar dataKey="Income" fill="#10b981" radius={[4, 4, 0, 0]} />
                 <Bar dataKey="Expense" fill="#ef4444" radius={[4, 4, 0, 0]} />
@@ -119,8 +123,8 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions }) => {
         </div>
 
         {/* Spending Breakdown */}
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-          <h4 className="text-lg font-semibold text-slate-800 mb-4">Spending Breakdown</h4>
+        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 transition-colors">
+          <h4 className="text-lg font-semibold text-slate-800 dark:text-white mb-4">Spending Breakdown</h4>
           <div className="h-64 flex flex-col md:flex-row items-center justify-center">
              <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -132,6 +136,7 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions }) => {
                   outerRadius={80}
                   paddingAngle={5}
                   dataKey="value"
+                  stroke="none"
                 >
                   {categoryData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
@@ -145,7 +150,7 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions }) => {
                 {categoryData.map((entry) => (
                     <div key={entry.name} className="flex items-center gap-2">
                         <div className="w-3 h-3 rounded-full" style={{backgroundColor: entry.color}}></div>
-                        <span className="text-slate-600">{entry.name}</span>
+                        <span className="text-slate-600 dark:text-slate-300">{entry.name}</span>
                     </div>
                 ))}
             </div>
