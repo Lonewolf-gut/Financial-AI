@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>FinPath AI Coach</title>
+    <title>ELAG AI</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
@@ -36,6 +36,29 @@
           -ms-overflow-style: none;
           scrollbar-width: none;
       }
+
+      /* Print Styles for PDF Export */
+      @media print {
+        @page { size: landscape; margin: 1cm; }
+        body { -webkit-print-color-adjust: exact; }
+        /* Hide sidebar, navigation, header, and buttons during print */
+        aside, header, button, .no-print, input, select { 
+          display: none !important; 
+        }
+        main { 
+          margin: 0 !important; 
+          padding: 0 !important; 
+          width: 100% !important;
+        }
+        /* Make sure table is fully visible */
+        table { width: 100% !important; border-collapse: collapse !important; }
+        th, td { border: 1px solid #ddd !important; padding: 8px !important; color: black !important; }
+        /* Show a specific print header */
+        .print-only { display: block !important; margin-bottom: 20px; }
+        /* Reset background colors */
+        .bg-white, .dark\:bg-slate-800 { background-color: white !important; color: black !important; box-shadow: none !important; border: none !important; }
+      }
+      .print-only { display: none; }
     </style>
   <script type="importmap">
 {

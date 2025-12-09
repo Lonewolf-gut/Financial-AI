@@ -32,20 +32,15 @@ const App: React.FC = () => {
 
   // Detect Currency on mount
   useEffect(() => {
-     // Try to guess based on locale
      try {
-         // This gives us a string like "USD", "EUR", "GBP"
-         // Note: Some browsers might return undefined or throw if they can't detect.
-         // Common strategy is mapping language.
          const locale = navigator.language || 'en-US';
-         // Simple mapping for demonstration as Intl...currency doesn't always work directly for detection without format parts
          if (locale.includes('GB')) setCurrency('GBP');
          else if (locale.includes('EU') || locale.includes('DE') || locale.includes('FR') || locale.includes('ES') || locale.includes('IT')) setCurrency('EUR');
          else if (locale.includes('JP')) setCurrency('JPY');
          else if (locale.includes('IN')) setCurrency('INR');
          else if (locale.includes('CA')) setCurrency('CAD');
          else if (locale.includes('AU')) setCurrency('AUD');
-         // Default is USD initialized in state
+         // Default is USD
      } catch (e) {
          console.warn("Could not detect currency automatically.");
      }
@@ -62,8 +57,6 @@ const App: React.FC = () => {
 
   const addTransaction = (t: Transaction) => {
     setTransactions(prev => [...prev, t]);
-    // Optional: stay on page or go to dashboard
-    // setCurrentView(AppView.DASHBOARD); 
   };
 
   const deleteTransaction = (id: string) => {
@@ -112,7 +105,7 @@ const App: React.FC = () => {
             <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
                 <Wallet className="text-white" size={18}/>
             </div>
-            <h1 className="text-xl font-bold tracking-tight text-slate-800 dark:text-white">FinPath AI</h1>
+            <h1 className="text-xl font-bold tracking-tight text-slate-800 dark:text-white">ELAG AI</h1>
           </div>
 
           <nav className="space-y-2 flex-1">
@@ -120,11 +113,10 @@ const App: React.FC = () => {
             <NavItem view={AppView.TRANSACTIONS} icon={List} label="Transactions" />
             <NavItem view={AppView.FORECAST} icon={Activity} label="Risk Forecast" />
             <NavItem view={AppView.RECEIPT_SCANNER} icon={Receipt} label="Scan / Camera" />
-            <NavItem view={AppView.COACH} icon={MessageSquareText} label="AI Coach" />
+            <NavItem view={AppView.COACH} icon={MessageSquareText} label="ELAG Coach" />
           </nav>
 
           <div className="mt-auto">
-             {/* Theme Toggle in Sidebar for Desktop */}
              <button 
                 onClick={() => setDarkMode(!darkMode)}
                 className="w-full mb-6 flex items-center gap-3 px-4 py-2 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
@@ -151,7 +143,7 @@ const App: React.FC = () => {
         <header className="lg:hidden bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 p-4 flex items-center justify-between sticky top-0 z-10 transition-colors">
           <div className="flex items-center gap-2 font-bold text-slate-800 dark:text-white">
             <Wallet className="text-indigo-600 dark:text-indigo-400" size={24} />
-            <span>FinPath</span>
+            <span>ELAG AI</span>
           </div>
           <div className="flex items-center gap-2">
             <button onClick={() => setDarkMode(!darkMode)} className="p-2 text-slate-600 dark:text-slate-300">
@@ -171,14 +163,14 @@ const App: React.FC = () => {
                         {currentView === AppView.DASHBOARD && 'Financial Overview'}
                         {currentView === AppView.TRANSACTIONS && 'Transaction History'}
                         {currentView === AppView.RECEIPT_SCANNER && 'Add Document or Photo'}
-                        {currentView === AppView.COACH && 'Your AI Financial Coach'}
+                        {currentView === AppView.COACH && 'Your ELAG AI Coach'}
                         {currentView === AppView.FORECAST && 'Predictive Health Check'}
                     </h2>
                     <p className="text-slate-500 dark:text-slate-400">
                         {currentView === AppView.DASHBOARD && 'Track your cash flow and spending patterns.'}
                         {currentView === AppView.TRANSACTIONS && 'Manage income and expenses manually.'}
                         {currentView === AppView.RECEIPT_SCANNER && 'Digitize receipts, PDFs, or take photos.'}
-                        {currentView === AppView.COACH && 'Chat with Fin to get personalized advice.'}
+                        {currentView === AppView.COACH && 'Chat with ELAG to get personalized advice.'}
                         {currentView === AppView.FORECAST && 'Identify risks before they become problems.'}
                     </p>
                 </div>

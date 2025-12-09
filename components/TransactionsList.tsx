@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Transaction, TransactionType } from '../types';
-import { Trash2, Plus, ArrowUpCircle, ArrowDownCircle, Search } from 'lucide-react';
+import { Trash2, Plus, ArrowUpCircle, ArrowDownCircle, Search, FileSpreadsheet, FileText, Download } from 'lucide-react';
 
 interface Props {
   transactions: Transaction[];
@@ -47,20 +47,54 @@ const TransactionsList: React.FC<Props> = ({ transactions, currency, onAdd, onDe
     setShowAddForm(false);
   };
 
+  const downloadCSV = () => {
+    const headers = ["Date", "Type", "Merchant", "Category", "Amount", "Description"];
+    const rows = transactions.map(t => [
+      t.date,
+      t.type,
+      `"${t.merchant.replace(/"/g, '""')}"`, // escape quotes for CSV
+      t.category,
+      t.amount.toFixed(2),
+      `"${(t.description || '').replace(/"/g, '""')}"`
+    ]);
+
+    const csvContent = "data:text/csv;charset=utf-8," 
+      + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `ELAG_Transactions_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handlePrint = () => {
+    window.print();
+  };
+
   const filteredTransactions = transactions
     .filter(t => activeTab === 'ALL' || t.type === activeTab)
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   return (
     <div className="space-y-6 animate-fade-in">
+      
+      {/* Print Header (Visible only in print mode) */}
+      <div className="print-only">
+        <h1 className="text-2xl font-bold">ELAG AI - Transaction Report</h1>
+        <p>Generated on {new Date().toLocaleDateString()}</p>
+      </div>
+
       {/* Controls */}
-      <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-        <div className="flex bg-white dark:bg-slate-800 p-1 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
+      <div className="flex flex-col xl:flex-row justify-between items-center gap-4 no-print">
+        <div className="flex bg-white dark:bg-slate-800 p-1 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 w-full xl:w-auto overflow-x-auto">
           {(['ALL', 'INCOME', 'EXPENSE'] as const).map(tab => (
              <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
                     activeTab === tab 
                     ? 'bg-indigo-600 text-white shadow-sm' 
                     : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'
@@ -71,17 +105,35 @@ const TransactionsList: React.FC<Props> = ({ transactions, currency, onAdd, onDe
           ))}
         </div>
         
-        <button
-          onClick={() => setShowAddForm(!showAddForm)}
-          className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-medium transition-colors shadow-sm"
-        >
-           {showAddForm ? 'Cancel' : <><Plus size={18} /> Add Manual</>}
-        </button>
+        <div className="flex items-center gap-2 w-full xl:w-auto justify-end">
+            <button
+                onClick={downloadCSV}
+                className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition-colors shadow-sm text-sm"
+                title="Export to Excel/CSV"
+            >
+                <FileSpreadsheet size={16} />
+                <span className="hidden sm:inline">Export Excel</span>
+            </button>
+            <button
+                onClick={handlePrint}
+                className="flex items-center gap-2 px-4 py-2 bg-slate-600 hover:bg-slate-700 text-white rounded-lg font-medium transition-colors shadow-sm text-sm"
+                title="Print or Save as PDF"
+            >
+                <FileText size={16} />
+                <span className="hidden sm:inline">Print / PDF</span>
+            </button>
+            <button
+            onClick={() => setShowAddForm(!showAddForm)}
+            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-medium transition-colors shadow-sm text-sm"
+            >
+            {showAddForm ? 'Cancel' : <><Plus size={16} /> <span className="hidden sm:inline">Add New</span><span className="sm:hidden">Add</span></>}
+            </button>
+        </div>
       </div>
 
       {/* Manual Entry Form */}
       {showAddForm && (
-        <form onSubmit={handleSubmit} className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <form onSubmit={handleSubmit} className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 no-print">
            <div className="col-span-full mb-2">
               <h3 className="font-semibold text-slate-800 dark:text-white">Add New Transaction</h3>
            </div>
@@ -170,7 +222,7 @@ const TransactionsList: React.FC<Props> = ({ transactions, currency, onAdd, onDe
                          <th className="p-4 font-medium">Merchant/Source</th>
                          <th className="p-4 font-medium">Category</th>
                          <th className="p-4 font-medium text-right">Amount</th>
-                         <th className="p-4 font-medium text-center">Action</th>
+                         <th className="p-4 font-medium text-center no-print">Action</th>
                      </tr>
                  </thead>
                  <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
@@ -179,20 +231,20 @@ const TransactionsList: React.FC<Props> = ({ transactions, currency, onAdd, onDe
                              <td className="p-4 text-slate-600 dark:text-slate-300 whitespace-nowrap">{t.date}</td>
                              <td className="p-4 font-medium text-slate-800 dark:text-white flex items-center gap-2">
                                  {t.type === TransactionType.INCOME 
-                                    ? <ArrowUpCircle size={16} className="text-emerald-500" /> 
-                                    : <ArrowDownCircle size={16} className="text-red-500" />
+                                    ? <ArrowUpCircle size={16} className="text-emerald-500 no-print" /> 
+                                    : <ArrowDownCircle size={16} className="text-red-500 no-print" />
                                  }
                                  {t.merchant}
                              </td>
                              <td className="p-4">
-                                 <span className="px-2 py-1 rounded-full text-xs font-medium bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
+                                 <span className="px-2 py-1 rounded-full text-xs font-medium bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-600">
                                      {t.category}
                                  </span>
                              </td>
                              <td className={`p-4 text-right font-bold ${t.type === TransactionType.INCOME ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-800 dark:text-slate-200'}`}>
                                  {t.type === TransactionType.INCOME ? '+' : '-'}{currency} {t.amount.toFixed(2)}
                              </td>
-                             <td className="p-4 text-center">
+                             <td className="p-4 text-center no-print">
                                  <button 
                                     onClick={() => onDelete(t.id)}
                                     className="p-2 text-slate-400 hover:text-red-500 transition-colors rounded-full hover:bg-red-50 dark:hover:bg-red-900/20"

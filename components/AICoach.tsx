@@ -15,7 +15,7 @@ const AICoach: React.FC<AICoachProps> = ({ transactions, currency }) => {
     {
       id: 'welcome',
       role: 'model',
-      content: "Hi! I'm Fin, your personal financial coach. I've analyzed your recent transactions. How are you feeling about your finances today?",
+      content: "Hi! I'm ELAG, your personal financial coach. I've analyzed your recent transactions. How are you feeling about your finances today?",
       timestamp: new Date()
     }
   ]);
@@ -89,7 +89,7 @@ const AICoach: React.FC<AICoachProps> = ({ transactions, currency }) => {
           <Sparkles size={20} className="text-yellow-300" />
         </div>
         <div>
-          <h3 className="font-semibold">Fin - Financial Coach</h3>
+          <h3 className="font-semibold">ELAG AI Coach</h3>
           <p className="text-xs text-indigo-100">Powered by Gemini 2.5</p>
         </div>
       </div>
@@ -125,7 +125,7 @@ const AICoach: React.FC<AICoachProps> = ({ transactions, currency }) => {
                </div>
                <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl rounded-tl-none border border-slate-100 dark:border-slate-700 shadow-sm flex items-center gap-2">
                  <Loader2 className="animate-spin text-indigo-500" size={16} />
-                 <span className="text-slate-400 dark:text-slate-500 text-sm">Fin is thinking...</span>
+                 <span className="text-slate-400 dark:text-slate-500 text-sm">ELAG is thinking...</span>
                </div>
             </div>
           </div>
@@ -158,7 +158,7 @@ const AICoach: React.FC<AICoachProps> = ({ transactions, currency }) => {
           </button>
         </div>
         <p className="text-center text-[10px] text-slate-400 mt-2">
-          Fin gives AI-generated advice. Always verify with a professional.
+          ELAG gives AI-generated advice. Always verify with a professional.
         </p>
       </div>
     </div>
