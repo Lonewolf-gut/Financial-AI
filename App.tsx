@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { LayoutDashboard, Wallet, Receipt, MessageSquareText, Activity, Menu, X, Plus, List, Moon, Sun, LogOut } from 'lucide-react';
+import { LayoutDashboard, Receipt, MessageSquareText, Activity, Menu, X, Plus, List, Moon, Sun, LogOut } from 'lucide-react';
 import { Transaction, TransactionType, AppView, User } from './types';
 import Dashboard from './components/Dashboard';
 import Scanner from './components/Scanner';
@@ -7,6 +7,7 @@ import AICoach from './components/AICoach';
 import FinancialHealth from './components/FinancialHealth';
 import TransactionsList from './components/TransactionsList';
 import Auth from './components/Auth';
+import { Logo } from './components/Logo';
 
 // Seed Data for Demo (used if no data exists for user)
 const INITIAL_TRANSACTIONS: Transaction[] = [
@@ -157,10 +158,8 @@ const App: React.FC = () => {
         isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
       }`}>
         <div className="p-6 flex flex-col h-full">
-          <div className="flex items-center gap-2 mb-8 text-indigo-700 dark:text-indigo-400">
-            <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
-                <Wallet className="text-white" size={18}/>
-            </div>
+          <div className="flex items-center gap-3 mb-8">
+            <Logo className="w-8 h-8" />
             <h1 className="text-xl font-bold tracking-tight text-slate-800 dark:text-white">ELAG AI</h1>
           </div>
 
@@ -211,7 +210,7 @@ const App: React.FC = () => {
         {/* Mobile Header */}
         <header className="lg:hidden bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 p-4 flex items-center justify-between sticky top-0 z-10 transition-colors">
           <div className="flex items-center gap-2 font-bold text-slate-800 dark:text-white">
-            <Wallet className="text-indigo-600 dark:text-indigo-400" size={24} />
+            <Logo className="w-8 h-8" />
             <span>ELAG AI</span>
           </div>
           <div className="flex items-center gap-2">

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Wallet, Mail, Lock, User as UserIcon, ArrowRight, Loader2, AlertCircle } from 'lucide-react';
+import { Mail, Lock, User as UserIcon, ArrowRight, Loader2, AlertCircle } from 'lucide-react';
 import { User } from '../types';
+import { Logo } from './Logo';
 
 interface AuthProps {
   onLogin: (user: User) => void;
@@ -82,10 +83,8 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
       <div className="max-w-md w-full bg-white dark:bg-slate-800 rounded-2xl shadow-xl overflow-hidden border border-slate-100 dark:border-slate-700">
         
         {/* Header */}
-        <div className="bg-indigo-600 p-8 text-center">
-            <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center mx-auto mb-4">
-                <Wallet className="text-white" size={24} />
-            </div>
+        <div className="bg-indigo-600 p-8 text-center flex flex-col items-center">
+            <Logo className="w-16 h-16 mb-4 drop-shadow-lg" />
             <h1 className="text-2xl font-bold text-white mb-1">ELAG AI</h1>
             <p className="text-indigo-100 text-sm">Your Intelligent Financial Companion</p>
         </div>
