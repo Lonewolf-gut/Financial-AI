@@ -1,0 +1,7 @@
+{
+  "name": "Copy of FinPath AI Coach",
+  "description": "An intelligent financial companion that analyzes receipts, tracks spending habits, and provides empathetic, data-driven coaching to improve financial health.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
