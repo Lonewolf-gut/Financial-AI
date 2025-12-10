@@ -37,7 +37,7 @@ const App: React.FC = () => {
   
   // Currency State
   const [currency, setCurrency] = useState('USD');
-
+  
   // 1. Check for active session on load
   useEffect(() => {
     const session = localStorage.getItem('elag_session');
@@ -108,7 +108,7 @@ const App: React.FC = () => {
   const deleteTransaction = (id: string) => {
     setTransactions(prev => prev.filter(t => t.id !== id));
   };
-
+  
   const currentBalance = useMemo(() => {
      const income = transactions.filter(t => t.type === TransactionType.INCOME).reduce((a, b) => a + b.amount, 0);
      const expense = transactions.filter(t => t.type === TransactionType.EXPENSE).reduce((a, b) => a + b.amount, 0);
@@ -251,15 +251,17 @@ const App: React.FC = () => {
                     </p>
                 </div>
                 
-                {currentView !== AppView.RECEIPT_SCANNER && currentView !== AppView.TRANSACTIONS && (
-                    <button 
-                        onClick={() => setCurrentView(AppView.TRANSACTIONS)}
-                        className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-lg font-medium transition-colors shadow-sm hover:shadow-md"
-                    >
-                        <Plus size={18} />
-                        <span>Manage Transactions</span>
-                    </button>
-                )}
+                <div className="flex items-center gap-3">
+                    {currentView !== AppView.RECEIPT_SCANNER && currentView !== AppView.TRANSACTIONS && (
+                        <button 
+                            onClick={() => setCurrentView(AppView.TRANSACTIONS)}
+                            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-lg font-medium transition-colors shadow-sm hover:shadow-md"
+                        >
+                            <Plus size={18} />
+                            <span>Manage Transactions</span>
+                        </button>
+                    )}
+                </div>
             </div>
 
             {/* View Content */}
