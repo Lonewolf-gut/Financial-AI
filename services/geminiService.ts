@@ -22,12 +22,13 @@ export const fileToGenerativePart = async (file: File): Promise<{ data: string, 
 // 1. Receipt/Document Parsing Logic
 export const parseReceiptImage = async (base64Data: string, mimeType: string = "image/jpeg"): Promise<Partial<Transaction>> => {
   const model = "gemini-2.5-flash";
+  const today = new Date().toISOString().split('T')[0];
   
   const schema: Schema = {
     type: Type.OBJECT,
     properties: {
       merchant: { type: Type.STRING, description: "Name of the merchant, store, or payer (for income)" },
-      date: { type: Type.STRING, description: "Date of transaction in YYYY-MM-DD format" },
+      date: { type: Type.STRING, description: `Date of transaction in YYYY-MM-DD format. Today is ${today}.` },
       amount: { type: Type.NUMBER, description: "Total amount of the transaction" },
       category: { type: Type.STRING, description: "Category of expense or income source" },
       description: { type: Type.STRING, description: "Brief description of items purchased or income detail" },
@@ -64,12 +65,14 @@ export const parseReceiptImage = async (base64Data: string, mimeType: string = "
 // 2. Financial Health Analysis (Updated for Business Context)
 export const analyzeFinancialHealth = async (transactions: Transaction[], currency: string = 'USD'): Promise<FinancialHealthMetric> => {
   const model = "gemini-2.5-flash";
+  const today = new Date().toISOString().split('T')[0];
   
   const summary = transactions.map(t => 
     `${t.date}: ${t.merchant} (${t.category}) - ${currency} ${t.amount} [${t.type}]`
   ).join('\n');
 
   const prompt = `
+    Current Date: ${today}.
     Analyze the following transaction history for a Small/Medium Enterprise (SME) or individual. User currency is ${currency}.
     Calculate a 'Business Health Score' (0-100).
     Identify cash flow status, projected savings/surplus, specific business risks (e.g., high burn rate, vendor dependency),
@@ -124,12 +127,14 @@ export const getCoachResponse = async (
   currency: string = 'USD'
 ) => {
   const model = "gemini-2.5-flash";
+  const today = new Date().toISOString().split('T')[0];
   
   const transactionContext = JSON.stringify(transactions.slice(-20)); 
   const systemInstruction = `
     You are 'Fin', an empathetic, intelligent, and data-driven financial coach for SMEs and individuals.
     Your goal is to help users manage cash flow, budgets, and financial decisions.
     The user's currency is ${currency}.
+    Current Date: ${today}.
     You have access to the user's recent transactions: ${transactionContext}.
     
     Guidelines:
@@ -194,6 +199,7 @@ export const generateBudgetPlan = async (transactions: Transaction[], currency: 
 export const generateSmartInsights = async (transactions: Transaction[]): Promise<Insight[]> => {
   const model = "gemini-2.5-flash";
   const summary = transactions.map(t => `${t.date}: ${t.merchant} (${t.amount})`).join('\n');
+  const today = new Date().toISOString().split('T')[0];
 
   const schema: Schema = {
     type: Type.ARRAY,
@@ -212,7 +218,7 @@ export const generateSmartInsights = async (transactions: Transaction[]): Promis
   try {
     const result = await ai.models.generateContent({
       model,
-      contents: `Analyze these transactions for smart insights. Find 3 insights: one savings opportunity, one spending pattern, and one alert (e.g. subscription or increase). Data: ${summary}`,
+      contents: `Current Date: ${today}. Analyze these transactions for smart insights. Find 3 insights: one savings opportunity, one spending pattern, and one alert (e.g. subscription or increase). Data: ${summary}`,
       config: { responseMimeType: "application/json", responseSchema: schema }
     });
     return JSON.parse(result.text || "[]") as Insight[];
@@ -225,6 +231,7 @@ export const generateSmartInsights = async (transactions: Transaction[]): Promis
 export const detectAnomalies = async (transactions: Transaction[]): Promise<Anomaly[]> => {
   const model = "gemini-2.5-flash";
   const summary = transactions.map(t => `ID:${t.id}, Date:${t.date}, Merch:${t.merchant}, Amt:${t.amount}, Cat:${t.category}`).join('\n');
+  const today = new Date().toISOString().split('T')[0];
 
   const schema: Schema = {
     type: Type.ARRAY,
@@ -242,7 +249,7 @@ export const detectAnomalies = async (transactions: Transaction[]): Promise<Anom
   try {
     const result = await ai.models.generateContent({
       model,
-      contents: `Analyze these transactions for fraud or anomalies (e.g. duplicates, unusually high amounts, strange merchants). Return list of anomalies. Data: ${summary}`,
+      contents: `Current Date is ${today}. Analyze these transactions for fraud or anomalies. Do not flag transactions as 'future date' if they are on or before ${today}. Look for duplicates, unusually high amounts, strange merchants. Return list of anomalies. Data: ${summary}`,
       config: { responseMimeType: "application/json", responseSchema: schema }
     });
     return JSON.parse(result.text || "[]") as Anomaly[];
@@ -273,7 +280,7 @@ export const predictCashFlow = async (transactions: Transaction[], currentBalanc
   try {
     const result = await ai.models.generateContent({
       model,
-      contents: `Based on transaction history, predict the daily cash flow balance for the next 30 days starting from ${today} with starting balance ${currentBalance}. Account for recurring bills/income. Data: ${summary}`,
+      contents: `Current Date: ${today}. Based on transaction history, predict the daily cash flow balance for the next 30 days starting from ${today} with starting balance ${currentBalance}. Account for recurring bills/income. Data: ${summary}`,
       config: { responseMimeType: "application/json", responseSchema: schema }
     });
     return JSON.parse(result.text || "[]") as CashFlowPoint[];

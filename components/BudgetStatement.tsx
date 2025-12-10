@@ -77,12 +77,14 @@ const BudgetStatement: React.FC<Props> = ({ transactions, currency }) => {
 
   // Calculate stats
   const stats = useMemo(() => {
-    const startOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
-    const endOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0);
+    // Robust date filtering: compare YYYY-MM strings to avoid timezone offsets
+    const year = currentMonth.getFullYear();
+    const month = String(currentMonth.getMonth() + 1).padStart(2, '0'); // 01 to 12
+    const currentMonthPrefix = `${year}-${month}`;
 
     const monthlyTransactions = transactions.filter(t => {
-      const d = new Date(t.date);
-      return t.type === TransactionType.EXPENSE && d >= startOfMonth && d <= endOfMonth;
+      // Transaction date is YYYY-MM-DD
+      return t.type === TransactionType.EXPENSE && t.date.startsWith(currentMonthPrefix);
     });
 
     const spendingByCategory: Record<string, number> = {};
