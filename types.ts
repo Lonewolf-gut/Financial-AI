@@ -34,7 +34,11 @@ export enum AppView {
   TRANSACTIONS = 'TRANSACTIONS',
   RECEIPT_SCANNER = 'RECEIPT_SCANNER',
   COACH = 'COACH',
-  FORECAST = 'FORECAST'
+  FORECAST = 'FORECAST',
+  BUDGETS = 'BUDGETS',
+  INSIGHTS = 'INSIGHTS',
+  ANOMALIES = 'ANOMALIES',
+  CASHFLOW = 'CASHFLOW'
 }
 
 export interface SpendingCategory {
@@ -47,4 +51,23 @@ export interface User {
   id: string;
   name: string;
   email: string;
+}
+
+export interface Insight {
+  type: 'SAVINGS' | 'PATTERN' | 'ALERT';
+  title: string;
+  description: string;
+  impactAmount?: number;
+}
+
+export interface Anomaly {
+  transactionId: string;
+  reason: string;
+  severity: 'HIGH' | 'MEDIUM' | 'LOW';
+}
+
+export interface CashFlowPoint {
+  date: string;
+  balance: number;
+  type: 'ACTUAL' | 'PREDICTED';
 }

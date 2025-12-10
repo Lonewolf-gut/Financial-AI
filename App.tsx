@@ -1,11 +1,15 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { LayoutDashboard, Receipt, MessageSquareText, Activity, Menu, X, Plus, List, Moon, Sun, LogOut } from 'lucide-react';
+import { LayoutDashboard, Receipt, MessageSquareText, Activity, Menu, X, Plus, List, Moon, Sun, LogOut, PieChart, Lightbulb, ShieldAlert, Briefcase } from 'lucide-react';
 import { Transaction, TransactionType, AppView, User } from './types';
 import Dashboard from './components/Dashboard';
 import Scanner from './components/Scanner';
 import AICoach from './components/AICoach';
 import FinancialHealth from './components/FinancialHealth';
 import TransactionsList from './components/TransactionsList';
+import BudgetStatement from './components/BudgetStatement';
+import SmartInsights from './components/SmartInsights';
+import AnomalyDetector from './components/AnomalyDetector';
+import CashFlowTimeline from './components/CashFlowTimeline';
 import Auth from './components/Auth';
 import { Logo } from './components/Logo';
 
@@ -50,8 +54,6 @@ const App: React.FC = () => {
         if (storedData) {
             setTransactions(JSON.parse(storedData));
         } else {
-            // First time user? Give them seed data or empty array
-            // Let's give seed data for demo purposes, then they can delete it
             setTransactions(INITIAL_TRANSACTIONS);
         }
     } else {
@@ -157,7 +159,7 @@ const App: React.FC = () => {
       <aside className={`fixed lg:sticky top-0 left-0 h-screen w-64 bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 z-30 transform transition-transform duration-300 ease-in-out ${
         isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
       }`}>
-        <div className="p-6 flex flex-col h-full">
+        <div className="p-6 flex flex-col h-full overflow-y-auto">
           <div className="flex items-center gap-3 mb-8">
             <Logo className="w-8 h-8" />
             <h1 className="text-xl font-bold tracking-tight text-slate-800 dark:text-white">ELAG AI</h1>
@@ -168,21 +170,28 @@ const App: React.FC = () => {
              <p className="font-semibold text-slate-800 dark:text-white truncate">{user.name}</p>
           </div>
 
-          <nav className="space-y-2 flex-1">
+          <nav className="space-y-1 flex-1">
             <NavItem view={AppView.DASHBOARD} icon={LayoutDashboard} label="Dashboard" />
+            <NavItem view={AppView.INSIGHTS} icon={Lightbulb} label="Smart Insights" />
+            <NavItem view={AppView.BUDGETS} icon={PieChart} label="Budget Statement" />
+            <NavItem view={AppView.CASHFLOW} icon={Activity} label="Cash Flow Timeline" />
+            <NavItem view={AppView.FORECAST} icon={Briefcase} label="Business Health" />
+            <NavItem view={AppView.ANOMALIES} icon={ShieldAlert} label="Fraud Detector" />
+            <div className="pt-4 pb-2">
+                <p className="px-4 text-xs font-semibold text-slate-400 uppercase tracking-wider">Tools</p>
+            </div>
             <NavItem view={AppView.TRANSACTIONS} icon={List} label="Transactions" />
-            <NavItem view={AppView.FORECAST} icon={Activity} label="Risk Forecast" />
             <NavItem view={AppView.RECEIPT_SCANNER} icon={Receipt} label="Scan / Camera" />
             <NavItem view={AppView.COACH} icon={MessageSquareText} label="ELAG Coach" />
           </nav>
 
-          <div className="mt-auto space-y-4">
+          <div className="mt-6 space-y-4">
              <button 
                 onClick={() => setDarkMode(!darkMode)}
                 className="w-full flex items-center gap-3 px-4 py-2 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
              >
                 {darkMode ? <Sun size={20} /> : <Moon size={20} />}
-                <span>{darkMode ? 'Light Mode' : 'Dark Mode'}</span>
+                <span>{darkMode ? 'Light' : 'Dark'} Mode</span>
              </button>
 
              <button 
@@ -192,15 +201,6 @@ const App: React.FC = () => {
                 <LogOut size={20} />
                 <span>Sign Out</span>
              </button>
-
-             <div className="bg-slate-900 dark:bg-slate-950 rounded-xl p-4 text-white shadow-lg">
-                <p className="text-xs text-slate-400 mb-1">Current Balance</p>
-                <p className="text-xl font-bold">{formatCurrency(currentBalance)}</p>
-                <div className="mt-3 flex items-center gap-2 text-xs text-emerald-400">
-                    <Activity size={12} />
-                    <span>Real-time</span>
-                </div>
-             </div>
           </div>
         </div>
       </aside>
@@ -232,14 +232,22 @@ const App: React.FC = () => {
                         {currentView === AppView.TRANSACTIONS && 'Transaction History'}
                         {currentView === AppView.RECEIPT_SCANNER && 'Add Document or Photo'}
                         {currentView === AppView.COACH && 'Your ELAG AI Coach'}
-                        {currentView === AppView.FORECAST && 'Predictive Health Check'}
+                        {currentView === AppView.FORECAST && 'Business Health Score'}
+                        {currentView === AppView.BUDGETS && 'Budget Generator'}
+                        {currentView === AppView.INSIGHTS && 'AI Smart Insights'}
+                        {currentView === AppView.ANOMALIES && 'Fraud & Anomaly Detector'}
+                        {currentView === AppView.CASHFLOW && 'Cash Flow Predictions'}
                     </h2>
                     <p className="text-slate-500 dark:text-slate-400">
                         {currentView === AppView.DASHBOARD && 'Track your cash flow and spending patterns.'}
                         {currentView === AppView.TRANSACTIONS && 'Manage income and expenses manually.'}
                         {currentView === AppView.RECEIPT_SCANNER && 'Digitize receipts, PDFs, or take photos.'}
                         {currentView === AppView.COACH && 'Chat with ELAG to get personalized advice.'}
-                        {currentView === AppView.FORECAST && 'Identify risks before they become problems.'}
+                        {currentView === AppView.FORECAST && 'Business health metrics and risk analysis.'}
+                        {currentView === AppView.BUDGETS && 'Auto-generate budgets using AI.'}
+                        {currentView === AppView.INSIGHTS && 'Discover patterns and savings opportunities.'}
+                        {currentView === AppView.ANOMALIES && 'Identify suspicious activity.'}
+                        {currentView === AppView.CASHFLOW && 'Project future balances.'}
                     </p>
                 </div>
                 
@@ -261,6 +269,10 @@ const App: React.FC = () => {
                 {currentView === AppView.RECEIPT_SCANNER && <Scanner onAddTransaction={addTransaction} />}
                 {currentView === AppView.COACH && <AICoach transactions={transactions} currency={currency} />}
                 {currentView === AppView.FORECAST && <FinancialHealth transactions={transactions} currency={currency} />}
+                {currentView === AppView.BUDGETS && <BudgetStatement transactions={transactions} currency={currency} />}
+                {currentView === AppView.INSIGHTS && <SmartInsights transactions={transactions} currency={currency} />}
+                {currentView === AppView.ANOMALIES && <AnomalyDetector transactions={transactions} currency={currency} />}
+                {currentView === AppView.CASHFLOW && <CashFlowTimeline transactions={transactions} currency={currency} />}
             </div>
         </div>
       </main>

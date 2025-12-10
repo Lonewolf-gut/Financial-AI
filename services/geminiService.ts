@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type, Schema } from "@google/genai";
-import { Transaction, TransactionType, FinancialHealthMetric } from "../types";
+import { Transaction, TransactionType, FinancialHealthMetric, Insight, Anomaly, CashFlowPoint } from "../types";
 
 const apiKey = process.env.API_KEY || '';
 const ai = new GoogleGenAI({ apiKey });
@@ -61,20 +61,19 @@ export const parseReceiptImage = async (base64Data: string, mimeType: string = "
   }
 };
 
-// 2. Financial Health Analysis
+// 2. Financial Health Analysis (Updated for Business Context)
 export const analyzeFinancialHealth = async (transactions: Transaction[], currency: string = 'USD'): Promise<FinancialHealthMetric> => {
   const model = "gemini-2.5-flash";
   
-  // Prepare data summary for the prompt
   const summary = transactions.map(t => 
     `${t.date}: ${t.merchant} (${t.category}) - ${currency} ${t.amount} [${t.type}]`
   ).join('\n');
 
   const prompt = `
-    Analyze the following financial transaction history. User currency is ${currency}.
-    Provide a health score (0-100), a status label, projected savings for next month based on trends,
-    identify 3 potential risks (e.g., recurring large expenses, increasing frequency of dining out),
-    and 3 specific actionable recommendations.
+    Analyze the following transaction history for a Small/Medium Enterprise (SME) or individual. User currency is ${currency}.
+    Calculate a 'Business Health Score' (0-100).
+    Identify cash flow status, projected savings/surplus, specific business risks (e.g., high burn rate, vendor dependency),
+    and actionable business recommendations.
     
     Transactions:
     ${summary}
@@ -106,7 +105,6 @@ export const analyzeFinancialHealth = async (transactions: Transaction[], curren
     return JSON.parse(result.text || "{}") as FinancialHealthMetric;
   } catch (error) {
     console.error("Error analyzing finances:", error);
-    // Return a fallback if AI fails to prevent app crash
     return {
       score: 50,
       status: "Warning",
@@ -127,19 +125,18 @@ export const getCoachResponse = async (
 ) => {
   const model = "gemini-2.5-flash";
   
-  // Context injection
-  const transactionContext = JSON.stringify(transactions.slice(-20)); // Last 20 transactions
+  const transactionContext = JSON.stringify(transactions.slice(-20)); 
   const systemInstruction = `
-    You are 'Fin', an empathetic, intelligent, and data-driven financial coach.
-    Your goal is to help users build wealth, avoid debt, and reduce financial anxiety.
+    You are 'Fin', an empathetic, intelligent, and data-driven financial coach for SMEs and individuals.
+    Your goal is to help users manage cash flow, budgets, and financial decisions.
     The user's currency is ${currency}.
     You have access to the user's recent transactions: ${transactionContext}.
     
     Guidelines:
-    1. Be empathetic. Money is emotional. Acknowledge stress.
-    2. Be specific. Use the transaction data to point out patterns (e.g., "I noticed you spent ${currency}200 on coffee this month").
-    3. Be actionable. Don't just say "save more". Say "If you cut 2 takeout meals, you save ${currency}40".
-    4. Keep responses concise and conversational.
+    1. Be empathetic but professional.
+    2. Be specific. Use the transaction data.
+    3. Focus on cash flow and sustainability.
+    4. Keep responses concise.
   `;
 
   try {
@@ -157,5 +154,130 @@ export const getCoachResponse = async (
   } catch (error) {
     console.error("Chat error:", error);
     return "I'm having trouble connecting to my financial database right now. Please try again in a moment.";
+  }
+};
+
+// 4. AI Budget Generator
+export const generateBudgetPlan = async (transactions: Transaction[], currency: string): Promise<Record<string, number>> => {
+  const model = "gemini-2.5-flash";
+  const summary = transactions.filter(t => t.type === TransactionType.EXPENSE).map(t => `${t.category}: ${t.amount}`).join('\n');
+  
+  const prompt = `Based on these expenses, create a realistic monthly budget for each category to improve savings. Return JSON where keys are category names and values are budget limits (numbers). Expenses: ${summary}`;
+  
+  const schema: Schema = {
+    type: Type.OBJECT,
+    properties: {
+      budget: {
+        type: Type.OBJECT,
+        additionalProperties: { type: Type.NUMBER } // Dynamic keys for categories
+      }
+    }
+  };
+
+  try {
+    const result = await ai.models.generateContent({
+      model,
+      contents: prompt,
+      config: { responseMimeType: "application/json" } // Schema for dynamic keys is tricky, letting model infer
+    });
+    
+    // Fallback parsing strategy for dynamic keys
+    const parsed = JSON.parse(result.text || "{}");
+    return parsed.budget || parsed;
+  } catch (e) {
+    console.error("Budget Gen Error", e);
+    return { 'General': 1000 };
+  }
+};
+
+// 5. Smart Insights
+export const generateSmartInsights = async (transactions: Transaction[]): Promise<Insight[]> => {
+  const model = "gemini-2.5-flash";
+  const summary = transactions.map(t => `${t.date}: ${t.merchant} (${t.amount})`).join('\n');
+
+  const schema: Schema = {
+    type: Type.ARRAY,
+    items: {
+      type: Type.OBJECT,
+      properties: {
+        type: { type: Type.STRING, enum: ['SAVINGS', 'PATTERN', 'ALERT'] },
+        title: { type: Type.STRING },
+        description: { type: Type.STRING },
+        impactAmount: { type: Type.NUMBER }
+      },
+      required: ['type', 'title', 'description']
+    }
+  };
+
+  try {
+    const result = await ai.models.generateContent({
+      model,
+      contents: `Analyze these transactions for smart insights. Find 3 insights: one savings opportunity, one spending pattern, and one alert (e.g. subscription or increase). Data: ${summary}`,
+      config: { responseMimeType: "application/json", responseSchema: schema }
+    });
+    return JSON.parse(result.text || "[]") as Insight[];
+  } catch (e) {
+    return [];
+  }
+};
+
+// 6. Fraud/Anomaly Detection
+export const detectAnomalies = async (transactions: Transaction[]): Promise<Anomaly[]> => {
+  const model = "gemini-2.5-flash";
+  const summary = transactions.map(t => `ID:${t.id}, Date:${t.date}, Merch:${t.merchant}, Amt:${t.amount}, Cat:${t.category}`).join('\n');
+
+  const schema: Schema = {
+    type: Type.ARRAY,
+    items: {
+      type: Type.OBJECT,
+      properties: {
+        transactionId: { type: Type.STRING },
+        reason: { type: Type.STRING },
+        severity: { type: Type.STRING, enum: ['HIGH', 'MEDIUM', 'LOW'] }
+      },
+      required: ['transactionId', 'reason', 'severity']
+    }
+  };
+
+  try {
+    const result = await ai.models.generateContent({
+      model,
+      contents: `Analyze these transactions for fraud or anomalies (e.g. duplicates, unusually high amounts, strange merchants). Return list of anomalies. Data: ${summary}`,
+      config: { responseMimeType: "application/json", responseSchema: schema }
+    });
+    return JSON.parse(result.text || "[]") as Anomaly[];
+  } catch (e) {
+    return [];
+  }
+};
+
+// 7. Cash Flow Prediction
+export const predictCashFlow = async (transactions: Transaction[], currentBalance: number): Promise<CashFlowPoint[]> => {
+  const model = "gemini-2.5-flash";
+  const summary = transactions.map(t => `${t.date}: ${t.amount} (${t.type})`).join('\n');
+  const today = new Date().toISOString().split('T')[0];
+
+  const schema: Schema = {
+    type: Type.ARRAY,
+    items: {
+      type: Type.OBJECT,
+      properties: {
+        date: { type: Type.STRING },
+        balance: { type: Type.NUMBER },
+        type: { type: Type.STRING, enum: ['PREDICTED'] }
+      },
+      required: ['date', 'balance', 'type']
+    }
+  };
+
+  try {
+    const result = await ai.models.generateContent({
+      model,
+      contents: `Based on transaction history, predict the daily cash flow balance for the next 30 days starting from ${today} with starting balance ${currentBalance}. Account for recurring bills/income. Data: ${summary}`,
+      config: { responseMimeType: "application/json", responseSchema: schema }
+    });
+    return JSON.parse(result.text || "[]") as CashFlowPoint[];
+  } catch (e) {
+    return [];
   }
 };

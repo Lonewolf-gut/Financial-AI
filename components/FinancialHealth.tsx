@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ShieldCheck, AlertTriangle, TrendingUp, HeartPulse, Loader2, ArrowRight } from 'lucide-react';
+import { ShieldCheck, AlertTriangle, TrendingUp, HeartPulse, Loader2, ArrowRight, Briefcase } from 'lucide-react';
 import { Transaction, FinancialHealthMetric } from '../types';
 import { analyzeFinancialHealth } from '../services/geminiService';
 
@@ -47,7 +47,7 @@ const FinancialHealth: React.FC<Props> = ({ transactions, currency }) => {
     return (
       <div className="flex flex-col items-center justify-center h-64">
         <Loader2 className="animate-spin text-indigo-600 dark:text-indigo-400 mb-4" size={40} />
-        <p className="text-slate-600 dark:text-slate-300">Generating financial forecast...</p>
+        <p className="text-slate-600 dark:text-slate-300">Calculating Business Health Score...</p>
       </div>
     );
   }
@@ -80,9 +80,9 @@ const FinancialHealth: React.FC<Props> = ({ transactions, currency }) => {
       {/* Score Card */}
       <div className="lg:col-span-1 bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col items-center justify-center text-center transition-colors">
         <div className="mb-4 p-3 bg-slate-50 dark:bg-slate-700 rounded-full">
-            <HeartPulse size={32} className="text-indigo-600 dark:text-indigo-400" />
+            <Briefcase size={32} className="text-indigo-600 dark:text-indigo-400" />
         </div>
-        <h3 className="text-lg font-medium text-slate-500 dark:text-slate-400 mb-1">Financial Health Score</h3>
+        <h3 className="text-lg font-medium text-slate-500 dark:text-slate-400 mb-1">Business Health Score</h3>
         <div className={`text-5xl font-bold mb-4 ${getScoreColor(metric.score)}`}>
           {metric.score}/100
         </div>
@@ -100,18 +100,18 @@ const FinancialHealth: React.FC<Props> = ({ transactions, currency }) => {
       <div className="lg:col-span-2 space-y-6">
         
         {/* Projections */}
-        <div className="bg-gradient-to-r from-indigo-500 to-purple-600 p-6 rounded-2xl shadow-md text-white">
+        <div className="bg-gradient-to-r from-blue-600 to-indigo-700 p-6 rounded-2xl shadow-md text-white">
           <div className="flex items-center gap-4 mb-4">
              <TrendingUp className="text-white/80" />
-             <h4 className="text-lg font-semibold">Next Month's Projection</h4>
+             <h4 className="text-lg font-semibold">Cash Surplus Projection</h4>
           </div>
           <div className="flex flex-col sm:flex-row justify-between items-end">
              <div>
-                <p className="text-indigo-100 text-sm mb-1">Estimated Savings Potential</p>
-                <p className="text-3xl font-bold">+{formatCurrency(metric.projectedSavings)}</p>
+                <p className="text-indigo-100 text-sm mb-1">Estimated Monthly Surplus</p>
+                <p className="text-3xl font-bold">{metric.projectedSavings >= 0 ? '+' : ''}{formatCurrency(metric.projectedSavings)}</p>
              </div>
              <button className="mt-4 sm:mt-0 px-4 py-2 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-lg text-sm font-medium transition-colors">
-                View Detailed Plan
+                View Cash Flow Report
              </button>
           </div>
         </div>
@@ -120,7 +120,7 @@ const FinancialHealth: React.FC<Props> = ({ transactions, currency }) => {
             {/* Risks */}
             <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-red-100 dark:border-red-900/30 transition-colors">
                 <h4 className="text-red-600 dark:text-red-400 font-semibold flex items-center gap-2 mb-4">
-                    <AlertTriangle size={18} /> Potential Risks
+                    <AlertTriangle size={18} /> Business Risks
                 </h4>
                 <ul className="space-y-3">
                     {metric.risks.map((risk, idx) => (
@@ -135,7 +135,7 @@ const FinancialHealth: React.FC<Props> = ({ transactions, currency }) => {
             {/* Recommendations */}
             <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-emerald-100 dark:border-emerald-900/30 transition-colors">
                 <h4 className="text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-2 mb-4">
-                    <ShieldCheck size={18} /> Action Plan
+                    <ShieldCheck size={18} /> Growth Opportunities
                 </h4>
                  <ul className="space-y-3">
                     {metric.recommendations.map((rec, idx) => (
